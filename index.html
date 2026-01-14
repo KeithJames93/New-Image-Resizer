@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Resizer & Background Remover</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a4d2e;
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #1a4d2e;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        button {
+            background-color: #2d8659;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #3da372;
+        }
+
+        button:active {
+            background-color: #2d8659;
+        }
+
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+
+        .section {
+            background-color: rgba(45, 134, 89, 0.2);
+            border: 1px solid #2d8659;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: white;
+        }
+
+        .resize-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .resize-controls label {
+            font-size: 10px;
+            color: white;
+        }
+
+        .resize-controls input[type="number"] {
+            width: 80px;
+            padding: 5px;
+            font-size: 10px;
+            border: 1px solid #2d8659;
+            border-radius: 4px;
+            background-color: white;
+            color: black;
+        }
+
+        .resize-controls input[type="checkbox"] {
+            margin-left: 10px;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .resize-controls label[for="aspectRatio"] {
+            margin-left: 5px;
+            cursor: pointer;
+        }
+
+        .image-container {
+            background-color: #1a4d2e;
+            border: 2px dashed #2d8659;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .image-container.empty::before {
+            content: "No image loaded";
+            color: #888;
+            font-size: 14px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-label {
+            display: inline-block;
+            background-color: #2d8659;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .file-input-label:hover {
+            background-color: #3da372;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #3da372;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .info-message {
+            background-color: rgba(61, 163, 114, 0.3);
+            border: 1px solid #3da372;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 10px;
+            display: none;
+        }
+
+        .info-message.show {
+            display: block;
+        }
+
+        .info-message.error {
+            background-color: rgba(200, 50, 50, 0.3);
+            border-color: #c83232;
+        }
+
+        canvas {
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .resize-controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Image Resizer & Background Remover</h1>
+
+        <div class="button-group">
+            <div class="file-input-wrapper">
+                <input type="file" id="imageInput" accept="image/*">
+                <label for="imageInput" class="file-input-label">Load Image</label>
+            </div>
+        </div>
+
+        <div id="infoMessage" class="info-message"></div>
+
+        <div class="section">
+            <div class="section-title">Resize Options</div>
+            <div class="resize-controls">
+                <label for="widthInput">Width:</label>
+                <input type="number" id="widthInput" min="1" placeholder="Width">
+                
+                <label for="heightInput">Height:</label>
+                <input type="number" id="heightInput" min="1" placeholder="Height">
+                
+                <input type="checkbox" id="aspectRatio" checked>
+                <label for="aspectRatio">Maintain Aspect Ratio</label>
+            </div>
+            <button id="resizeBtn" disabled>Resize Image</button>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Background Removal</div>
+            <button id="removeBgBtn" disabled>Remove Background</button>
+            <div class="loading" id="loadingBg">
+                Processing background removal... This may take a moment.
+            </div>
+        </div>
+
+        <div class="image-container empty" id="imageContainer">
+            <img id="displayImage" style="display: none;" alt="Processed image">
+        </div>
+
+        <div class="button-group">
+            <button id="saveBtn" disabled>Save Processed Image</button>
+            <button id="resetBtn" disabled>Reset to Original</button>
+        </div>
+
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
